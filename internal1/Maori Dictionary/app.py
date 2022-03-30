@@ -24,3 +24,10 @@ def create_connection(db_file):
 def render_homepage():
         return render_template('home.html')
 
+
+
+
+
+
+
+app.run(host='0.0.0.0', debug=True)
