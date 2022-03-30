@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link href="https://fonts.googleapis.com/css2?family=Comfortaa&family=Suez+One&display=swap" rel="stylesheet">
+	<title>{% block title %}{% endblock %}</title>
+	<meta name="Description" content="Author: D Benseman, Content: A dictionary to convert maori words to english.">
+</head>
+
+<body>
+	<div id="container">
+
+		<header>
+			<h1>{% block heading %}{% endblock %}</h1>
+		</header>
+
+		<nav>
+            <input type="checkbox" name="drop_down_menu" />
+			<span></span>
+			<span></span>
+			<span></span>
+			<ul>
+                <li><a href="\">Home</a></li>
+                <li><a href="\">Actions</a></li>
+                <li><a href="\">Animals</a></li>
+                <li><a href="\">Clothing</a></li>
+                <li><a href="\">Culture/Religon</a></li>
+                <li><a href="\">Descriptive</a></li>
+                <li><a href="\">Emotions</a></li>
+                <li><a href="\">Food</a></li>
+                <li><a href="\">Math/Number</a></li>
+                <li><a href="\">People</a></li>
+                <li><a href="\">Plants</a></li>
+                <li><a href="\">Places</a></li>
+                <li><a href="\">School</a></li>
+                <li><a href="\">Sport</a></li>
+                <li><a href="\">Technology</a></li>
+                <li><a href="\">Time</a></li>
+                <li><p>-------------</p></li>
+                <li><a href="\">Login</a></li>
+			</ul>
+		</nav>
+
+
+		<!--
+		=====================================================
+		== Content row of the template.                 ==
+		=====================================================
+		-->
+
+		<main>
+            {% block main%}{% endblock %}
+        </main>
+
+
+		<footer>
+			<p>
+				&copy; By Dylan Wu 2022
+			</p>
+		</footer>
+
+	</div>
+</body>
+</html>
