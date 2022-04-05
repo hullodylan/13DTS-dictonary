@@ -23,7 +23,14 @@ def create_connection(db_file):
 #Homepage link route
 @app.route('/')
 def render_homepage():
-    return render_template('home.html')
+    #Category nav/sidebar
+    con = create_connection(database)
+    query = "SELECT category FROM wordbank"
+    cur = con.cursor()  # You need this line next
+    cur.execute(query)  # this line actually executes the query
+    category_ids = cur.fetchall()  # puts the results into a list usable in python
+    con.close()
+    return render_template('home.html', category=category_ids)
 
 
 
@@ -37,12 +44,35 @@ def render_category_page():
     cur = con.cursor()  # You need this line next
     cur.execute(query)  # this line actually executes the query
     word_ids = cur.fetchall()  # puts the results into a list usable in python
-    print(word_ids)
     con.close()
     return render_template('category.html', wordbank=word_ids)
 
 
+#Login link route
+@app.route('/login')
+def render_login_page():
+    return render_template('login.html')
 
+#Signup link route
+@app.route('/signup', methods=['GET', 'POST'])
+def render_signup_page():
+    print(request.form)
+    fname = request.form.get('fname')
+    lname = request.form.get('lname')
+    email = request.form.get('email')
+    password = request.form.get('password')
+    password2 = request.form.get('password2')
+
+    con = create_connection(database)
+    query = "INSERT INTO user(id, fname, lname, email, password) VALUES(NULL,?,?,?,?)"
+
+    cur = con.cursor()
+    cur.execute(query, (fname, lname, email, password))
+    con.commit()
+    con.close()
+
+
+    return render_template('signup.html')
 
 
 app.run(host='0.0.0.0', debug=True)
