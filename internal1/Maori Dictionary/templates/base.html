@@ -15,30 +15,27 @@
 			<h1>{% block heading %}{% endblock %}</h1>
 		</header>
 
+
 		<nav>
             <input type="checkbox" name="drop_down_menu" />
 			<span></span>
 			<span></span>
 			<span></span>
 			<ul>
-                <li><a href="\">Home</a></li>
-                <li><a href="\">Actions</a></li>
-                <li><a href="\">Animals</a></li>
-                <li><a href="\">Clothing</a></li>
-                <li><a href="\">Culture/Religon</a></li>
-                <li><a href="\">Descriptive</a></li>
-                <li><a href="\">Emotions</a></li>
-                <li><a href="\">Food</a></li>
-                <li><a href="\">Math/Number</a></li>
-                <li><a href="\">People</a></li>
-                <li><a href="\">Plants</a></li>
-                <li><a href="\">Places</a></li>
-                <li><a href="\">School</a></li>
-                <li><a href="\">Sport</a></li>
-                <li><a href="\">Technology</a></li>
-                <li><a href="\">Time</a></li>
-                <li><p>-------------</p></li>
-                <li><a href="\">Login</a></li>
+				<li><a href="/">Home</a></li>
+				<li><a href="/category">Test</a></li>
+
+				<li>-------------------</li>
+
+				{% if logged_in %}
+				<a href="/logout">log out</a>
+				{% else  %}
+				<a href="/login">log in</a>
+				{% endif %}
+
+
+
+
 			</ul>
 		</nav>
 
@@ -50,6 +47,11 @@
 		-->
 
 		<main>
+			{% if logged_in %}
+			<strong>Hello, {{ session.firstname }}!</strong>
+			{% endif %}
+
+
             {% block main%}{% endblock %}
         </main>
 
