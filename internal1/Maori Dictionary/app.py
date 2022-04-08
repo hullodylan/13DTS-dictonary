@@ -4,7 +4,7 @@ from sqlite3 import Error
 from flask_bcrypt import Bcrypt
 from datetime import datetime
 
-database = "C:/Users/Dylan Wu/OneDrive - Wellington College/year 13/13DTS-dictonary/internal1/Maori Dictionary/identifier.sqlite"
+database = "C:/Users/admin/OneDrive - Wellington College/year 13/13DTS-dictonary/internal1/Maori Dictionary/identifier.sqlite"
 app = Flask(__name__)
 bcrypt = Bcrypt(app)
 app.secret_key = "secret"
@@ -20,18 +20,10 @@ def create_connection(db_file):
         print(e)
     return None
 
-#Homepage link route
+#Homepage link route - need to add timestamp - when someone added it, session
 @app.route('/')
 def render_homepage():
-    #Category nav/sidebar
-    con = create_connection(database)
-    query = "SELECT category FROM wordbank"
-    cur = con.cursor()  # You need this line next
-    cur.execute(query)  # this line actually executes the query
-    category_ids = cur.fetchall()  # puts the results into a list usable in python
-    con.close()
-    return render_template('home.html', category=category_ids)
-
+    return render_template('home.html', categories=categories(), logged_in=is_logged_in())
 
 
 #category link route
@@ -45,34 +37,124 @@ def render_category_page():
     cur.execute(query)  # this line actually executes the query
     word_ids = cur.fetchall()  # puts the results into a list usable in python
     con.close()
-    return render_template('category.html', wordbank=word_ids)
+    return render_template('category.html', wordbank=word_ids, logged_in=is_logged_in(), categories=categories())
 
+#Add word page - need to create an INSERT INTO - insert into both category and wordbank
+@app.route('/addword')
+def addword():
+    return render_template('addword.html', logged_in=is_logged_in(), categories=categories())
 
 #Login link route
-@app.route('/login')
+@app.route('/login', methods=["GET", "POST"])
 def render_login_page():
-    return render_template('login.html')
+    if is_logged_in():
+        return redirect('/')
+
+    if request.method == "POST":
+        email = request.form["email"].strip().lower()
+        password = request.form["password"].strip()
+
+        query = """SELECT id, fname, password FROM user WHERE email = ? """
+        con = create_connection(database)
+        cur = con.cursor()  # You need this line next
+        cur.execute(query, (email,))  # this line actually executes the query
+        user_data = cur.fetchall()
+        con.close()
+
+        try:
+            userid = user_data[0][0]
+            firstname = user_data[0][1]
+            db_password = user_data[0][2]
+        except IndexError:
+            return redirect("/login?error=Email+invalid+or+password+incorrect")
+
+# check if the password is incorrect for that email address
+
+        if not bcrypt.check_password_hash(db_password, password):
+            return redirect(request.referrer + "?error=Email+invalid+or+password+incorrect")
+
+        session['email'] = email
+        session['userid'] = userid
+        session['firstname'] = firstname
+        print(session)
+        return redirect('/')
+
+    return render_template('login.html', logged_in=is_logged_in(), categories=categories())
+
 
 #Signup link route
 @app.route('/signup', methods=['GET', 'POST'])
 def render_signup_page():
-    print(request.form)
-    fname = request.form.get('fname')
-    lname = request.form.get('lname')
-    email = request.form.get('email')
-    password = request.form.get('password')
-    password2 = request.form.get('password2')
+    if is_logged_in():
+        return redirect('/')
 
+    if request.method == 'POST':
+        print(request.form)
+        fname = request.form.get('fname').strip().title()
+        lname = request.form.get('lname').strip().title()
+        email = request.form.get('email').strip().lower()
+        password = request.form.get('password')
+        password2 = request.form.get('password2')
+
+#error prevention
+        if password != password2:
+            return redirect('/signup?error=Passwords+dont+match')
+        if len(password) < 8:
+            return redirect('/signup?error=Password+must+be+8+characters+or+more')
+        if len(fname) < 2:
+            return redirect('/signup?error=First+name+must+be+2+characters+or+more')
+        if len(lname) < 1:
+            return redirect('/signup?error=Last+name+must+be+2+characters+or+more')
+        if len(email) < 6:
+            return redirect('/signup?error=please+enter+a+valid+email')
+
+        hashed_password = bcrypt.generate_password_hash(password)
+
+        con = create_connection(database)
+        query = "INSERT into user(id, fname, lname, email, password) VALUES(NULL, ?,?,?,?)"
+
+        cur = con.cursor()
+        try:
+            cur.execute(query, (fname, lname, email, hashed_password))
+        except sqlite3.IntegrityError:
+            return redirect('/signup?error=email+is+already+used')
+        con.commit()
+        con.close()
+
+        return redirect('/login')
+#Error prevention
+    error = request.args.get('error')
+    if error == None:
+        error = ""
+
+    return render_template('signup.html', logged_in=is_logged_in(), error=error, categories=categories())
+
+#Allowing the user to log out
+@app.route('/logout')
+def logout():
+    print(list(session.keys()))
+    [session.pop(key) for key in list(session.keys())]
+    print(list(session.keys()))
+    return redirect('/?message=See+you+next+time!')
+
+def is_logged_in():
+    if session.get("email") is None:
+        print("not logged in")
+        return False
+    else:
+        print("logged in")
+        return True
+
+
+
+def categories():
+    # Category nav/sidebar
+    query = "SELECT category FROM category"
     con = create_connection(database)
-    query = "INSERT INTO user(id, fname, lname, email, password) VALUES(NULL,?,?,?,?)"
-
     cur = con.cursor()
-    cur.execute(query, (fname, lname, email, password))
-    con.commit()
+    cur.execute(query)
+    category_ids = cur.fetchall()
     con.close()
-
-
-    return render_template('signup.html')
-
+    return category_ids
 
 app.run(host='0.0.0.0', debug=True)
