@@ -6,5 +6,23 @@
 
 {% block main %}
 <h>Welcome to Dylan's dictionary!</h>
-<p>Use this to find Maroi and English words, and all of their definitions!</p>
+<p>Use this to find Maōri and English words, and all of their definitions!</p>
+
+
+{% if logged_in %}
+<form class="myform" method="post">
+    <div class="form-group">
+        <div class="form-label">Add a category:</div>
+        <div class="form-element"><input id="category_id" name="category_id" type="text"></div>
+    </div>
+
+    <div class="button-group">
+            <input type="submit" value="Submit">
+        </div>
+
+
+</form>
+{% endif %}
+
+
 {% endblock %}
