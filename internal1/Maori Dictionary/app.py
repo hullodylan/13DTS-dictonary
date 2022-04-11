@@ -4,7 +4,7 @@ from sqlite3 import Error
 from flask_bcrypt import Bcrypt
 from datetime import datetime
 
-database = "C:/Users/admin/OneDrive - Wellington College/year 13/13DTS-dictonary/internal1/Maori Dictionary/identifier.sqlite"
+database = "identifier.sqlite"
 app = Flask(__name__)
 bcrypt = Bcrypt(app)
 app.secret_key = "secret"
@@ -21,17 +21,36 @@ def create_connection(db_file):
     return None
 
 #Homepage link route - need to add timestamp - when someone added it, session
-@app.route('/')
+@app.route('/', methods=['GET', 'POST'])
 def render_homepage():
-    return render_template('home.html', categories=categories(), logged_in=is_logged_in())
+    if request.method == 'POST':
+        category_id =request.form.get('category_id').strip().lower()
+        user_id = session['userid']
+        timestamp = datetime.now()
+        con = create_connection(database)
 
+        query = "INSERT INTO category(id, category_id, user_id, timestamp ) VALUES(NULL,?, ?, ?)"
+        cur = con.cursor()  # You need this line next
+
+        try:
+            cur.execute(query, (category_id, user_id, timestamp))  # this line actually executes the query
+        except sqlite3.IntegrityError:
+            return redirect('/?error=category+is+already+used')
+        con.commit()
+        con.close()
+
+    error = request.args.get('error')
+    if error == None:
+        error = ""
+
+    return render_template('home.html', categories=categories(), logged_in=is_logged_in(), error=error)
 
 #category link route
 @app.route('/category')
 def render_category_page():
     con = create_connection(database)
 
-    query = "SELECT maori, english, category, definition, level FROM wordbank"
+    query = "SELECT maori, english FROM wordbank"
 
     cur = con.cursor()  # You need this line next
     cur.execute(query)  # this line actually executes the query
@@ -39,10 +58,7 @@ def render_category_page():
     con.close()
     return render_template('category.html', wordbank=word_ids, logged_in=is_logged_in(), categories=categories())
 
-#Add word page - need to create an INSERT INTO - insert into both category and wordbank
-@app.route('/addword')
-def addword():
-    return render_template('addword.html', logged_in=is_logged_in(), categories=categories())
+
 
 #Login link route
 @app.route('/login', methods=["GET", "POST"])
@@ -96,7 +112,7 @@ def render_signup_page():
         password = request.form.get('password')
         password2 = request.form.get('password2')
 
-#error prevention
+#user error prevention
         if password != password2:
             return redirect('/signup?error=Passwords+dont+match')
         if len(password) < 8:
@@ -149,7 +165,7 @@ def is_logged_in():
 
 def categories():
     # Category nav/sidebar
-    query = "SELECT category FROM category"
+    query = "SELECT category_id FROM category"
     con = create_connection(database)
     cur = con.cursor()
     cur.execute(query)
