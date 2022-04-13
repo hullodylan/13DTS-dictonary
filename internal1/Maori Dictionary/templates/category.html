@@ -1,8 +1,8 @@
 {% extends 'base.html' %}
 
-{% block title %}Maōri Dictionary | Home{% endblock %}
+{% block title %}{% endblock %}
 
-{% block heading %}Maōri - English Dictionary{% endblock %}
+{% block heading %}{% endblock %}
 
 {% block main %}
 
@@ -14,21 +14,19 @@
         <td><strong>image</strong></td>
     </tr>
     </thead>
-<tbody>
+    <tbody>
+    {% for word in wordbank %}
+        {% if word[0] == category_id %}
+            <tr>
+                <td>{{ word[1] }}</td>
+                <td>{{ word[2] }}</td>
+                <td><img src="/static/images/{{ word[3] }}" class="thumb"></td>
 
-{%  for wordbank in wordbank %}
-<tr>
-    <td><a href="/">{{ wordbank[0] }}</a></td>
-    <td>{{ wordbank[1] }}</td>
-    <td><img src="static/images/{{ wordbank[2] }}"></td>
+            </tr>
 
 
-
-</tr>
-{%  endfor %}
-
-</tbody>
+        {% endif %}
+    {% endfor %}
+    </tbody>
 </table>
-
-
 {% endblock %}
