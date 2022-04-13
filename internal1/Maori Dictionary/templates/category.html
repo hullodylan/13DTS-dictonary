@@ -6,26 +6,21 @@
 
 {% block main %}
 
-
 <table class="word-table">
     <thead>
     <tr>
-        <td>maori</td>
-        <td>english</td>
-        <td>category</td>
-        <td>definition</td>
-        <td>level</td>
+        <td><strong>maori</strong></td>
+        <td><strong>english</strong></td>
+        <td><strong>image</strong></td>
     </tr>
     </thead>
 <tbody>
 
 {%  for wordbank in wordbank %}
 <tr>
-    <td><a href="home.html/{{ wordbank[0] }}">{{ wordbank[0] }}</a></td>
-    <td>{{  wordbank[1] }}</td>
-    <td>{{  wordbank[2] }}</td>
-    <td>{{  wordbank[3] }}</td>
-    <td>{{  wordbank[4] }}</td>
+    <td><a href="/">{{ wordbank[0] }}</a></td>
+    <td>{{ wordbank[1] }}</td>
+    <td><img src="static/images/{{ wordbank[2] }}"></td>
 
 
 
