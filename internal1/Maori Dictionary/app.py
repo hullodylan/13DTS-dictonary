@@ -24,16 +24,16 @@ def create_connection(db_file):
 @app.route('/', methods=['GET', 'POST'])
 def render_homepage():
     if request.method == 'POST':
-        category_id =request.form.get('category_id').strip().lower()
+        cat_name =request.form.get('cat_name').strip().lower()
         user_id = session['userid']
         timestamp = datetime.now()
         con = create_connection(database)
 
-        query = "INSERT INTO category(id, category_id, user_id, timestamp ) VALUES(NULL,?, ?, ?)"
+        query = "INSERT INTO category(id, cat_name, user_id, timestamp ) VALUES(NULL,?, ?, ?)"
         cur = con.cursor()  # You need this line next
 
         try:
-            cur.execute(query, (category_id, user_id, timestamp))  # this line actually executes the query
+            cur.execute(query, (cat_name, user_id, timestamp))  # this line actually executes the query
         except sqlite3.IntegrityError:
             return redirect('/?error=category+is+already+used')
         con.commit()
@@ -46,15 +46,25 @@ def render_homepage():
     return render_template('home.html', categories=categories(), logged_in=is_logged_in(), error=error)
 
 #category link route
-@app.route('/category')
-def render_category_page():
+@app.route('/category/<cat_id>')
+def render_category_page(cat_id):
     con = create_connection(database)
 
-    query = "SELECT maori, english FROM wordbank"
+    query = "SELECT maori, english, image FROM wordbank"
 
     cur = con.cursor()  # You need this line next
     cur.execute(query)  # this line actually executes the query
     word_ids = cur.fetchall()  # puts the results into a list usable in python
+
+    unique_cat_id = list(set(word_ids))
+
+
+    for i in range(len(unique_cat_id)):
+        cat_count = word_ids.count(unique_cat_id[i])
+        unique_cat_id[i] = [unique_cat_id[i], cat_count]
+    print(unique_cat_id)
+
+
     con.close()
     return render_template('category.html', wordbank=word_ids, logged_in=is_logged_in(), categories=categories())
 
@@ -162,15 +172,14 @@ def is_logged_in():
         return True
 
 
-
 def categories():
     # Category nav/sidebar
-    query = "SELECT category_id FROM category"
+    query = "SELECT id, cat_name FROM category"
     con = create_connection(database)
     cur = con.cursor()
     cur.execute(query)
-    category_ids = cur.fetchall()
+    cat_names = cur.fetchall()
     con.close()
-    return category_ids
+    return cat_names
 
 app.run(host='0.0.0.0', debug=True)
