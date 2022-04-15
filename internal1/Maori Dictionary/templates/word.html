@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block title %}Maōri Dictionary | Home{% endblock %}
+
+{% block heading %}Maōri - English Dictionary{% endblock %}
+
+
+{% block main %}
+{% for wordbank in word_display %}
+    {% if wordbank[0] == word_id %}
+        <p><strong>Maori:</strong> {{ wordbank[1] }}</p>
+        <p><strong>English:</strong> {{ wordbank[2] }}</p>
+        <p><strong>Definition:</strong> {{ wordbank[3] }}</p>
+        <p><strong>Level:</strong> {{ wordbank[4] }}</p>
+        <p><img src="/static/images/{{ wordbank[5] }}"></p>
+        <p>User:</p>
+        <p>Date added:</p>
+    {% endif %}
+{% endfor %}
+
+{% endblock %}
