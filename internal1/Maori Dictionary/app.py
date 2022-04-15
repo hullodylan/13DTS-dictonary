@@ -48,15 +48,51 @@ def render_homepage():
 def render_category_page(cat_id):
     con = create_connection(database)
 
-    query = "SELECT cat_id, maori, english, image FROM wordbank"
+    query = "SELECT cat_id, maori, english, image, id FROM wordbank"
 
     cur = con.cursor()  # You need this line next
     cur.execute(query)  # this line actually executes the query
-    word_ids = cur.fetchall()  # puts the results into a list usable in python
+    words = cur.fetchall()  # puts the results into a list usable in python
     con.close()
 
 
-    return render_template('category.html', wordbank=word_ids, logged_in=is_logged_in(), categories=categories(), category_id=int(cat_id))
+    return render_template('category.html', wordbank=words, logged_in=is_logged_in(), categories=categories(), category_id=int(cat_id))
+
+#Takes user to specific word details page
+@app.route('/word/<word_id>')
+def render_word_page(word_id):
+    con = create_connection(database)
+    query = "SELECT id, maori, english, definition, level, image FROM wordbank"
+    cur = con.cursor()  # You need this line next
+    cur.execute(query)  # this line actually executes the query
+    word_display = cur.fetchall()  # puts the results into a list usable in python
+    con.close()
+
+    return render_template('word.html', logged_in=is_logged_in(), categories=categories(), word_display=word_display, word_id=int(word_id))
+
+
+#fix me!! - arent going through, can be submitted - need to make it an int?
+@app.route('/addword', methods=['GET', 'POST']) #need to add user and timestamp to the mix  #also need to sort out id much like the categories
+def render_addword_page():
+    if request.method == 'POST':
+        maori = request.form.get('maori')
+        english = request.form.get('english')
+        definition = request.form.get('defintion')
+        level = request.form.get('level')
+
+        con = create_connection(database)
+        query = "INSERT INTO wordbank(id, maori, english, definition, level) VALUES(NULL, ?, ?, ?, ?)"
+        cur = con.cursor()
+        try:
+            cur.execute(query, (maori, english, definition, level, ))
+        except sqlite3.IntegrityError:
+                return redirect('/?error=category+is+already+used')
+        print(query)
+    error = request.args.get('error')
+    if error == None:
+        error = ""
+
+    return render_template('addword.html', logged_in=is_logged_in(), categories=categories(), error=error)
 
 
 
