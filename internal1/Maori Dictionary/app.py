@@ -9,6 +9,25 @@ app = Flask(__name__)
 bcrypt = Bcrypt(app)
 app.secret_key = "secret"
 
+def is_logged_in():
+    if session.get("email") is None:
+        print("not logged in")
+        return False
+    else:
+        print("logged in")
+        return True
+
+
+def categories():
+    # Category nav/sidebar
+    query = "SELECT id, cat_name FROM category"
+    con = create_connection(database)
+    cur = con.cursor()
+    cur.execute(query)
+    cat_names = cur.fetchall()
+    con.close()
+    return cat_names
+
 def create_connection(db_file):
     """create a connection to the sqlite db"""
     try:
@@ -20,7 +39,7 @@ def create_connection(db_file):
         print(e)
     return None
 
-#Homepage link route - need to add timestamp - when someone added it, session
+# Homepage link route - need to add timestamp - when someone added it, session
 @app.route('/', methods=['GET', 'POST'])
 def render_homepage():
     if request.method == 'POST':
@@ -43,9 +62,10 @@ def render_homepage():
 
     return render_template('home.html', categories=categories(), logged_in=is_logged_in(), error=error)
 
-#category link route
+# category link route
 @app.route('/category/<cat_id>')
 def render_category_page(cat_id):
+
     con = create_connection(database)
 
     query = "SELECT cat_id, maori, english, image, id FROM wordbank"
@@ -56,38 +76,42 @@ def render_category_page(cat_id):
     con.close()
 
 
-    return render_template('category.html', wordbank=words, logged_in=is_logged_in(), categories=categories(), category_id=int(cat_id))
+    return render_template('category.html', wordbank=words, logged_in=is_logged_in(), categories=categories(),
+                           category_id=int(cat_id))
 
-#Takes user to specific word details page
+# Takes user to specific word details page
 @app.route('/word/<word_id>')
 def render_word_page(word_id):
     con = create_connection(database)
-    query = "SELECT id, maori, english, definition, level, image FROM wordbank"
+    query = "SELECT id, maori, english, definition, level, image, timestamp, editor_id FROM wordbank"
     cur = con.cursor()  # You need this line next
     cur.execute(query)  # this line actually executes the query
     word_display = cur.fetchall()  # puts the results into a list usable in python
     con.close()
 
-    return render_template('word.html', logged_in=is_logged_in(), categories=categories(), word_display=word_display, word_id=int(word_id))
+    return render_template('word.html', logged_in=is_logged_in(), categories=categories(), word_display=word_display,
+                           word_id=int(word_id))
 
 
 #fix me!! - arent going through, can be submitted - need to make it an int?
-@app.route('/addword', methods=['GET', 'POST']) #need to add user and timestamp to the mix  #also need to sort out id much like the categories
+@app.route('/addword', methods=['GET', 'POST']) #need to add user and timestamp to the mix - session for user  #also need to sort out id much like the categories
 def render_addword_page():
     if request.method == 'POST':
         maori = request.form.get('maori')
         english = request.form.get('english')
         definition = request.form.get('defintion')
         level = request.form.get('level')
+        editor_id = session['userid']
+        timestamp = datetime.now()
 
         con = create_connection(database)
-        query = "INSERT INTO wordbank(id, maori, english, definition, level) VALUES(NULL, ?, ?, ?, ?)"
+        query = "INSERT INTO wordbank(id, maori, english, definition, level, editor_id, timestamp ) VALUES(NULL, ?, ?, ?, ?, ?,?)"
         cur = con.cursor()
         try:
-            cur.execute(query, (maori, english, definition, level, ))
+            cur.execute(query, (maori, english, definition, level, editor_id, timestamp ))
         except sqlite3.IntegrityError:
-                return redirect('/?error=category+is+already+used')
-        print(query)
+                return redirect('/addword?error=word+is+already+used')
+
     error = request.args.get('error')
     if error == None:
         error = ""
@@ -96,7 +120,7 @@ def render_addword_page():
 
 
 
-#Login link route
+# Login link route
 @app.route('/login', methods=["GET", "POST"])
 def render_login_page():
     if is_logged_in():
@@ -134,7 +158,7 @@ def render_login_page():
     return render_template('login.html', logged_in=is_logged_in(), categories=categories())
 
 
-#Signup link route
+# Signup link route
 @app.route('/signup', methods=['GET', 'POST'])
 def render_signup_page():
     if is_logged_in():
@@ -148,7 +172,7 @@ def render_signup_page():
         password = request.form.get('password')
         password2 = request.form.get('password2')
 
-#user error prevention
+# user error prevention
         if password != password2:
             return redirect('/signup?error=Passwords+dont+match')
         if len(password) < 8:
@@ -174,14 +198,14 @@ def render_signup_page():
         con.close()
 
         return redirect('/login')
-#Error prevention
+# Error prevention
     error = request.args.get('error')
     if error == None:
         error = ""
 
     return render_template('signup.html', logged_in=is_logged_in(), error=error, categories=categories())
 
-#Allowing the user to log out
+# Allowing the user to log out
 @app.route('/logout')
 def logout():
     print(list(session.keys()))
@@ -189,23 +213,6 @@ def logout():
     print(list(session.keys()))
     return redirect('/?message=See+you+next+time!')
 
-def is_logged_in():
-    if session.get("email") is None:
-        print("not logged in")
-        return False
-    else:
-        print("logged in")
-        return True
 
-
-def categories():
-    # Category nav/sidebar
-    query = "SELECT id, cat_name FROM category"
-    con = create_connection(database)
-    cur = con.cursor()
-    cur.execute(query)
-    cat_names = cur.fetchall()
-    con.close()
-    return cat_names
 
 app.run(host='0.0.0.0', debug=True)
