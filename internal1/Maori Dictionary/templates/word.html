@@ -13,9 +13,17 @@
         <p><strong>Definition:</strong> {{ wordbank[3] }}</p>
         <p><strong>Level:</strong> {{ wordbank[4] }}</p>
         <p><img src="/static/images/{{ wordbank[5] }}"></p>
-        <p>User:</p>
-        <p>Date added:</p>
+
+        {% for user in user_name %}
+            {% if user[0] == wordbank[7] %}
+            <p><strong>User:</strong>{{ user[1] }}</p>
+            {% endif %}
+        {% endfor %}
+        <p><strong>Date added:</strong>{{ wordbank[6] }}</p>
     {% endif %}
+
+
+
 {% endfor %}
 
 {% endblock %}

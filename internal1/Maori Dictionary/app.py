@@ -9,24 +9,6 @@ app = Flask(__name__)
 bcrypt = Bcrypt(app)
 app.secret_key = "secret"
 
-def is_logged_in():
-    if session.get("email") is None:
-        print("not logged in")
-        return False
-    else:
-        print("logged in")
-        return True
-
-
-def categories():
-    # Category nav/sidebar
-    query = "SELECT id, cat_name FROM category"
-    con = create_connection(database)
-    cur = con.cursor()
-    cur.execute(query)
-    cat_names = cur.fetchall()
-    con.close()
-    return cat_names
 
 def create_connection(db_file):
     """create a connection to the sqlite db"""
@@ -39,7 +21,31 @@ def create_connection(db_file):
         print(e)
     return None
 
-# Homepage link route - need to add timestamp - when someone added it, session
+# If user is logged in
+def is_logged_in():
+    if session.get("email") is None:
+        print("not logged in")
+        return False
+    else:
+        print("logged in")
+        return True
+
+# Displays categories on sidebar
+def categories():
+    # Category nav/sidebar
+    query = "SELECT id, cat_name FROM category"
+    con = create_connection(database)
+    cur = con.cursor()
+    cur.execute(query)
+    cat_names = cur.fetchall()
+    con.close()
+    return cat_names
+
+
+
+
+
+# Homepage link route
 @app.route('/', methods=['GET', 'POST'])
 def render_homepage():
     if request.method == 'POST':
@@ -76,25 +82,33 @@ def render_category_page(cat_id):
     con.close()
 
 
-    return render_template('category.html', wordbank=words, logged_in=is_logged_in(), categories=categories(),
+    return render_template('category.html', words=words, logged_in=is_logged_in(), categories=categories(),
                            category_id=int(cat_id))
 
 # Takes user to specific word details page
 @app.route('/word/<word_id>')
 def render_word_page(word_id):
-    con = create_connection(database)
+    # Grabbing the word details
     query = "SELECT id, maori, english, definition, level, image, timestamp, editor_id FROM wordbank"
+    con = create_connection(database)
     cur = con.cursor()  # You need this line next
     cur.execute(query)  # this line actually executes the query
     word_display = cur.fetchall()  # puts the results into a list usable in python
+
+# Grabbing the editors details
+    query = """SELECT id, fname FROM user"""
+    cur = con.cursor()  # You need this line next
+    cur.execute(query)  # this line actually executes the query
+    user_name = cur.fetchall()  # puts the results into a list usable in python
     con.close()
 
-    return render_template('word.html', logged_in=is_logged_in(), categories=categories(), word_display=word_display,
-                           word_id=int(word_id))
+    return render_template('word.html', logged_in=is_logged_in(), categories=categories(), word_id=int(word_id),
+                           word_display=word_display, user_name=user_name)
 
 
-#fix me!! - arent going through, can be submitted - need to make it an int?
-@app.route('/addword', methods=['GET', 'POST']) #need to add user and timestamp to the mix - session for user  #also need to sort out id much like the categories
+
+
+@app.route('/addword', methods=['GET', 'POST'])
 def render_addword_page():
     if request.method == 'POST':
         maori = request.form.get('maori')
@@ -108,15 +122,11 @@ def render_addword_page():
         query = "INSERT INTO wordbank(id, maori, english, definition, level, editor_id, timestamp ) VALUES(NULL, ?, ?, ?, ?, ?,?)"
         cur = con.cursor()
         try:
-            cur.execute(query, (maori, english, definition, level, editor_id, timestamp ))
+            cur.execute(query, (maori, english, definition, level, editor_id, timestamp))
         except sqlite3.IntegrityError:
                 return redirect('/addword?error=word+is+already+used')
 
-    error = request.args.get('error')
-    if error == None:
-        error = ""
-
-    return render_template('addword.html', logged_in=is_logged_in(), categories=categories(), error=error)
+    return render_template('addword.html', logged_in=is_logged_in(), categories=categories())
 
 
 
