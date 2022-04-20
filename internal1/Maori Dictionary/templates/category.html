@@ -5,7 +5,12 @@
 {% block heading %}{% endblock %}
 
 {% block main %}
+{% if logged_in %}
 
+
+
+{% endif %}
+<!-- Displaying words into their category links -->
 <table class="word-table">
     <thead>
     <tr>
@@ -15,13 +20,12 @@
     </tr>
     </thead>
     <tbody>
-    {% for word in wordbank %}
-        {% if word[0] == category_id %}
+    {% for wordbank in words %}
+        {% if wordbank[0] == category_id %}
             <tr>
-                <td>{{ word[1] }}</td>
-                <td>{{ word[2] }}</td>
-                <td><img src="/static/images/{{ word[3] }}" class="thumb"></td>
-
+                <td><a href="/word/{{ wordbank[4] }}">{{ wordbank[1] }}</a></td>
+                <td>{{ wordbank[2] }}</td>
+                <td><img src="/static/images/{{ wordbank[3] }}" class="thumb"></td>
             </tr>
 
 
@@ -29,4 +33,41 @@
     {% endfor %}
     </tbody>
 </table>
+
+<!-- User can add word into category -->
+    {%  if logged_in %}
+<div class="error">{{error}}</div>
+<form class="dataForm" method="post">
+    <h><strong>Add a word</strong></h>
+    <div class="form-group">
+        <div class="form-label">Maori word:</div>
+        <div class="form-element"><input id="maori" name="maori" type="text" required></div>
+    </div>
+
+    <div class="form-group">
+        <div class="form-label">English translation:</div>
+        <div class="form-element"><input id="english" name="english" type="text" required></div>
+    </div>
+
+    <div class="form-group">
+        <div class="form-label">Level:</div>
+        {% for i in range(10) %}
+            <input type="radio" id="{{ i + 1 }}" name="Level" value="{{ i + 1 }}">
+            <label for="{{ i + 1 }}">{{ i + 1 }}</label>
+        {% endfor %}
+        <div class="form-element"><input id="level" name="level" type="radio" required></div>
+    </div>
+
+    <div class="form-group">
+        <div class="form-label">Definition:</div>
+        <div class="form-element"><input id="definition" name="definition" type="text" required></div>
+    </div>
+
+
+    <div class="button-group">
+        <input type="submit" value="Submit">
+        <input type="reset" value="Reset">
+    </div>
+</form>
+    {% endif %}
 {% endblock %}
