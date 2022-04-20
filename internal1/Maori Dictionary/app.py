@@ -44,7 +44,6 @@ def categories():
 
 
 
-
 # Homepage link route
 @app.route('/', methods=['GET', 'POST'])
 def render_homepage():
@@ -69,7 +68,7 @@ def render_homepage():
     return render_template('home.html', categories=categories(), logged_in=is_logged_in(), error=error)
 
 # category link route
-@app.route('/category/<cat_id>')
+@app.route('/category/<cat_id>',methods=['GET', 'POST'])
 def render_category_page(cat_id):
 
     con = create_connection(database)
@@ -79,14 +78,34 @@ def render_category_page(cat_id):
     cur = con.cursor()  # You need this line next
     cur.execute(query)  # this line actually executes the query
     words = cur.fetchall()  # puts the results into a list usable in python
-    con.close()
 
+    if request.method == 'POST':
+        maori = request.form.get('maori')
+        english = request.form.get('english')
+        definition = request.form.get('definition')
+        level = request.form.get('level')
+        editor_id = session['userid']
+        timestamp = datetime.now()
+
+
+        query = """INSERT INTO wordbank(id, maori, english, cat_id, definition, level, editor_id, timestamp) VALUES(NULL, ?, ?, ?, ?, ?, ?,?)"""
+        cur = con.cursor()
+        try:
+            cur.execute(query, (maori, english, cat_id, definition, level, editor_id, timestamp))
+        except sqlite3.IntegrityError:
+                return redirect('/category?error=word+is+already+used')
+        con.commit()
+        con.close()
+
+    error = request.args.get('error')
+    if error == None:
+        error = ""
 
     return render_template('category.html', words=words, logged_in=is_logged_in(), categories=categories(),
-                           category_id=int(cat_id))
+                           category_id=int(cat_id), error=error)
 
 # Takes user to specific word details page
-@app.route('/word/<word_id>')
+@app.route('/word/<word_id>', methods=['GET', 'POST'])
 def render_word_page(word_id):
     # Grabbing the word details
     query = "SELECT id, maori, english, definition, level, image, timestamp, editor_id FROM wordbank"
@@ -102,31 +121,17 @@ def render_word_page(word_id):
     user_name = cur.fetchall()  # puts the results into a list usable in python
     con.close()
 
+# Allowing the user to edit a word
+    #if request.method == 'POST:':
+        #maori = request.form.get('maori')
+        #english = request.form.get('english')
+        #definition = request.form.get('defintion')
+        #level = request.form.get('level')
+        #editor_id = session['userid']
+        #timestamp = datetime.now()
+
     return render_template('word.html', logged_in=is_logged_in(), categories=categories(), word_id=int(word_id),
                            word_display=word_display, user_name=user_name)
-
-
-
-
-@app.route('/addword', methods=['GET', 'POST'])
-def render_addword_page():
-    if request.method == 'POST':
-        maori = request.form.get('maori')
-        english = request.form.get('english')
-        definition = request.form.get('defintion')
-        level = request.form.get('level')
-        editor_id = session['userid']
-        timestamp = datetime.now()
-
-        con = create_connection(database)
-        query = "INSERT INTO wordbank(id, maori, english, definition, level, editor_id, timestamp ) VALUES(NULL, ?, ?, ?, ?, ?,?)"
-        cur = con.cursor()
-        try:
-            cur.execute(query, (maori, english, definition, level, editor_id, timestamp))
-        except sqlite3.IntegrityError:
-                return redirect('/addword?error=word+is+already+used')
-
-    return render_template('addword.html', logged_in=is_logged_in(), categories=categories())
 
 
 
