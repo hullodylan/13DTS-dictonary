@@ -6,6 +6,7 @@
 
 
 {% block main %}
+    <!-- Displaying word -->
 {% for wordbank in word_display %}
     {% if wordbank[0] == word_id %}
         <p><strong>Maori:</strong> {{ wordbank[1] }}</p>
@@ -22,6 +23,43 @@
         <p><strong>Date added:</strong>{{ wordbank[6] }}</p>
     {% endif %}
 
+    <!-- Edit word -->
+    {% if wordbank[0] == word_id %}
+        {% if logged_in %}
+            <form class="dataForm" method="POST">
+            <p><strong>Edit word: {{ wordbank[1] }}</strong></p>
+
+            <div class="form-group">
+                    <div class="form-label">Maori: </div>
+                     <div class="form-element"><input id="maori" name="maori" required></div>
+                </div>
+
+            <div class="form-group">
+                <div class="form-label">English:</div>
+                 <div class="form-element"><input id="english" name="english" required></div>
+            </div>
+
+                <div class="form-group">
+            <div class="form-label">Level:</div>
+            {% for i in range(10) %}
+                <input type="radio" id="{{ i + 1 }}" name="Level" value="{{ i + 1 }}">
+                <label for="{{ i + 1 }}">{{ i + 1 }}</label>
+            {% endfor %}
+            <div class="form-element"><input id="level" name="level" type="radio" required></div>
+            </div>
+
+            <div class="form-group">
+                    <div class="form-label">Definition:</div>
+                     <div class="form-element"><input id="definition" name="definition" required></div>
+                </div>
+
+            <div class="button-group">
+                <input type="submit" value="Submit">
+                <input type="reset" value="Reset">
+            </div>
+            </form>
+        {% endif %}
+    {% endif %}
 
 
 {% endfor %}
