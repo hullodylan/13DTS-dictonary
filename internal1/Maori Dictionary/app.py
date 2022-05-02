@@ -51,7 +51,7 @@ def render_homepage():
         cat_name =request.form.get('cat_name').strip().lower()
         con = create_connection(database)
 
-        query = "INSERT INTO category(id, cat_name) VALUES(NULL,?)"
+        query = "INSERT INTO category(cat_name) VALUES(?)"
         cur = con.cursor()  # You need this line next
 
         try:
@@ -70,15 +70,20 @@ def render_homepage():
 # category link route
 @app.route('/category/<cat_id>',methods=['GET', 'POST'])
 def render_category_page(cat_id):
-
     con = create_connection(database)
 
+# Displaying each word on their category
     query = "SELECT cat_id, maori, english, image, id FROM wordbank"
+    cur = con.cursor()
+    cur.execute(query)
+    words = cur.fetchall()
 
-    cur = con.cursor()  # You need this line next
-    cur.execute(query)  # this line actually executes the query
-    words = cur.fetchall()  # puts the results into a list usable in python
+    query = "SELECT id, cat_name FROM category"
+    cur = con.cursor()
+    cur.execute(query)
+    category = cur.fetchall()
 
+# User can add word
     if request.method == 'POST':
         maori = request.form.get('maori')
         english = request.form.get('english')
@@ -86,23 +91,27 @@ def render_category_page(cat_id):
         level = request.form.get('level')
         editor_id = session['userid']
         timestamp = datetime.now()
+        image_name = "noimage.png"
 
 
-        query = """INSERT INTO wordbank(id, maori, english, cat_id, definition, level, editor_id, timestamp) VALUES(NULL, ?, ?, ?, ?, ?, ?,?)"""
+        query = """INSERT INTO wordbank(id, maori, english, cat_id, definition, level, editor_id, image, timestamp) 
+        VALUES(NULL, ?, ?, ?, ?, ?, ?, ?, ?)"""
         cur = con.cursor()
+
         try:
-            cur.execute(query, (maori, english, cat_id, definition, level, editor_id, timestamp))
+            cur.execute(query, (maori, english, cat_id, definition, level, editor_id, image_name, timestamp))
         except sqlite3.IntegrityError:
                 return redirect('/category?error=word+is+already+used')
         con.commit()
         con.close()
+        return redirect(request.url)
 
     error = request.args.get('error')
     if error == None:
         error = ""
 
     return render_template('category.html', words=words, logged_in=is_logged_in(), categories=categories(),
-                           category_id=int(cat_id), error=error)
+                           category_id=int(cat_id), error=error, category=category)
 
 # Takes user to specific word details page
 @app.route('/word/<word_id>', methods=['GET', 'POST'])
@@ -121,17 +130,26 @@ def render_word_page(word_id):
     user_name = cur.fetchall()  # puts the results into a list usable in python
     con.close()
 
-# Allowing the user to edit a word
-    #if request.method == 'POST:':
-        #maori = request.form.get('maori')
-        #english = request.form.get('english')
-        #definition = request.form.get('defintion')
-        #level = request.form.get('level')
-        #editor_id = session['userid']
-        #timestamp = datetime.now()
+#Add edit word stuff
+
 
     return render_template('word.html', logged_in=is_logged_in(), categories=categories(), word_id=int(word_id),
                            word_display=word_display, user_name=user_name)
+
+# User can delete a word - doesnt work
+@app.route('/delete_word/<word_id>')
+def render_delete_word_page(word_id):
+    con = create_connection()
+    query = "DELETE FROM wordbank WHERE id=?"
+    cur.execute(query)  # this line actually executes the query
+    word_display = cur.fetchall()  # puts the results into a list usable in python
+
+    return render_template('delete_word.html', categories=categories(), word_id=word_id)
+
+# User can delete a category
+@app.route('/delete_category')
+def render_delete_cat_page():
+    return render_template('delete_category.html', categories=categories())
 
 
 
