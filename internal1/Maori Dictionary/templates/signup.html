@@ -6,7 +6,7 @@ sign up
 
 {% block main %}
 <div class="error">{{error}}</div>
-<form class="myform" method="post">
+<form class="dataForm" method="post">
     <div class="form-group">
         <div class="form-label">First name:</div>
         <div class="form-element"><input id="fname" name="fname" type="text" required></div>
@@ -31,6 +31,15 @@ sign up
         <div class="form-label">Password (again):</div>
         <div class="form-element"><input id="password2" name="password2" type="password" required></div>
     </div>
+    <div class="form-label">Teacher or Student: </div>
+
+
+            <input type="radio" id="teacher" name="role" value="teacher" required>
+            <label for="teacher">Teacher</label>
+            <input type="radio" id="student" name="role" value="student" required>
+            <label for="student">Student</label>
+
+
 
     <div class="button-group">
         <input type="submit" value="Submit">
