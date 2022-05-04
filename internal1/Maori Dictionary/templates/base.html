@@ -23,15 +23,14 @@
 			<span></span>
 			<ul>
 				<li><a href="/">Home</a></li>
-				<li><a href="/category">Test</a></li>
+                <li>-------------------</li>
 
 				{% for category in categories %}
-				<li><a href="/{{ category[0] }}">{{ category[0] }}</a></li>
+				<li><a href="/category/{{ category[0] }}">{{ category[1] }}</a></li>
 				{% endfor %}
 				<li>-------------------</li>
 
 				{% if logged_in %}
-                <li><a href="/addword">add word</a></li>
                 <li><a href="/logout">log out</a></li>
 				{% else %}
 				<a href="/login">log in</a>
@@ -51,9 +50,7 @@
 		-->
 
 		<main>
-			{% if logged_in %}
-			<strong>Hello, {{ session.firstname }}!</strong>
-			{% endif %}
+
 
 
             {% block main%}{% endblock %}
