@@ -8,18 +8,20 @@
         {% if cat[0] == category_id %}
             {{ cat[1] }}
         {% endif %}
-
 {% endfor %}
 {% endblock %}
 
 {% block main %}
 
-<a href="/delete_category"><strong>Delete category</strong></a>
+{% if logged_in %}
+    {% for cat in category %}
+        {% if cat[0] == category_id %}
+            <a href="/delete_category/{{ cat[0] }}"><strong>Delete category</strong></a>
+        {% endif %}
+    {% endfor %}
+{% endif %}
+
 <!-- Displaying words into their category links -->
-
-
-
-
 <table class="word-table">
     <thead>
     <tr>
