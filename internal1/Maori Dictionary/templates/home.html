@@ -5,15 +5,19 @@
 {% block heading %}Maōri - English Dictionary{% endblock %}
 
 {% block main %}
+<!-- Welcoming the user to the page -->
+{% if logged_in %}
+<strong>Hello {{ session.firstname }}!</strong>
+{% endif %}
 <h>Welcome to Dylan's dictionary!</h>
 <p>Use this to find Maōri and English words, and all of their definitions!</p>
 
-
+<!-- Allowing the user to add a category -->
 {% if logged_in %}
-<form class="myform" method="post">
+<form class="dataForm" method="post">
     <div class="form-group">
         <div class="form-label">Add a category:</div>
-        <div class="form-element"><input id="category_id" name="category_id" type="text"></div>
+        <div class="form-element"><input id="cat_name" name="cat_name" type="text"></div>
     </div>
 
     <div class="button-group">
