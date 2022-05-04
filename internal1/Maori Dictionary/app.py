@@ -152,7 +152,7 @@ def render_word_page(word_id):
 @app.route('/delete_word/<word_id>')
 def render_delete_word_page(word_id):
     con = create_connection(database)
-    query = "SELECT id, maori FROM category "
+    query = "SELECT id, maori FROM wordbank "
     cur = con.cursor()
     cur.execute(query)
     word = cur.fetchall()
@@ -170,9 +170,25 @@ def render_delete_cat_page(cat_id):
     cat = cur.fetchall()
     return render_template('delete_category.html', categories=categories(), category=cat, cat_id=int(cat_id))
 
-@app.route('/confirm_delete',  methods=['GET', 'POST'])
-def confirm_delete():
-    return render_template('/')
+@app.route('/confirm_delete_cat/<cat_id>',  methods=['GET', 'POST'])
+def confirm_delete_cat(cat_id):
+    con = create_connection(database)
+    query = "DELETE FROM category WHERE id=?"
+    cur = con.cursor()
+    cur.execute(query, (cat_id,))
+    con.commit()
+    con.close()
+    return redirect('/')
+
+@app.route('/confirm_delete_word/<word_id>',  methods=['GET', 'POST'])
+def confirm_delete_word(word_id):
+    con = create_connection(database)
+    query = "DELETE FROM wordbank WHERE id=?"
+    cur = con.cursor()
+    cur.execute(query, (word_id, ))
+    con.commit()
+    con.close()
+    return redirect('/')
 
 @app.route('/dont_delete')
 def dont_delete():
