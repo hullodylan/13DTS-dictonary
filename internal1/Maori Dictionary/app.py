@@ -55,7 +55,7 @@ def render_homepage():
         cur = con.cursor()  # You need this line next
 
         try:
-            cur.execute(query, (cat_name, ))  # this line actually executes the query
+            cur.execute(query, (cat_name, ))
         except sqlite3.IntegrityError:
             return redirect('/?error=category+is+already+used')
         con.commit()
@@ -68,9 +68,13 @@ def render_homepage():
     return render_template('home.html', categories=categories(), logged_in=is_logged_in(), error=error)
 
 # category link route
-@app.route('/category/<cat_id>',methods=['GET', 'POST'])
+@app.route('/category/<cat_id>', methods=['GET', 'POST'])
 def render_category_page(cat_id):
     con = create_connection(database)
+    query = "SELECT id, cat_name FROM category"
+    cur = con.cursor()
+    cur.execute(query)
+    category = cur.fetchall()
 
 # Displaying each word on their category
     query = "SELECT cat_id, maori, english, image, id FROM wordbank"
@@ -78,10 +82,7 @@ def render_category_page(cat_id):
     cur.execute(query)
     words = cur.fetchall()
 
-    query = "SELECT id, cat_name FROM category"
-    cur = con.cursor()
-    cur.execute(query)
-    category = cur.fetchall()
+
 
 # User can add word
     if request.method == 'POST':
@@ -117,40 +118,65 @@ def render_category_page(cat_id):
 @app.route('/word/<word_id>', methods=['GET', 'POST'])
 def render_word_page(word_id):
     # Grabbing the word details
-    query = "SELECT id, maori, english, definition, level, image, timestamp, editor_id FROM wordbank"
     con = create_connection(database)
-    cur = con.cursor()  # You need this line next
-    cur.execute(query)  # this line actually executes the query
-    word_display = cur.fetchall()  # puts the results into a list usable in python
+    cur = con.cursor()
+    query = "SELECT id, maori, english, definition, level, image, timestamp, editor_id FROM wordbank"
+    cur.execute(query)
+    word_display = cur.fetchall()
 
 # Grabbing the editors details
     query = """SELECT id, fname FROM user"""
-    cur = con.cursor()  # You need this line next
-    cur.execute(query)  # this line actually executes the query
-    user_name = cur.fetchall()  # puts the results into a list usable in python
-    con.close()
+    cur = con.cursor()
+    cur.execute(query)
+    user_name = cur.fetchall()
+
 
 #Add edit word stuff
+    if request.method == "POST":
+        maori = request.form.get('maori').strip().lower()
+        english = request.form.get('english').strip().lower()
+        definition = request.form.get('definition').strip().lower()
+        level = request.form.get('level')
+        editor_id = session['userid']
+        timestamp = datetime.now()
 
-
+        query = "UPDATE wordbank SET maori=?, english=?, definition=?,level=?,timestamp=?, editor_id=? WHERE id=?"
+        cur.execute(query,(maori, english, definition, level, timestamp, editor_id, word_id))
+        con.commit()
+        return redirect(request.url)
+    con.close()
     return render_template('word.html', logged_in=is_logged_in(), categories=categories(), word_id=int(word_id),
                            word_display=word_display, user_name=user_name)
 
-# User can delete a word - doesnt work
+# User can delete a word
 @app.route('/delete_word/<word_id>')
 def render_delete_word_page(word_id):
-    con = create_connection()
-    query = "DELETE FROM wordbank WHERE id=?"
-    cur.execute(query)  # this line actually executes the query
-    word_display = cur.fetchall()  # puts the results into a list usable in python
+    con = create_connection(database)
+    query = "SELECT id, maori FROM category "
+    cur = con.cursor()
+    cur.execute(query)
+    word = cur.fetchall()
+    con.close()
 
-    return render_template('delete_word.html', categories=categories(), word_id=word_id)
+    return render_template('delete_word.html', categories=categories(), word_id=int(word_id), word=word)
 
 # User can delete a category
-@app.route('/delete_category')
-def render_delete_cat_page():
-    return render_template('delete_category.html', categories=categories())
+@app.route('/delete_category/<cat_id>')
+def render_delete_cat_page(cat_id):
+    con = create_connection(database)
+    query = "SELECT id, cat_name FROM category "
+    cur = con.cursor()
+    cur.execute(query)
+    cat = cur.fetchall()
+    return render_template('delete_category.html', categories=categories(), category=cat, cat_id=int(cat_id))
 
+@app.route('/confirm_delete',  methods=['GET', 'POST'])
+def confirm_delete():
+    return render_template('/')
+
+@app.route('/dont_delete')
+def dont_delete():
+    return redirect('/')
 
 
 # Login link route
