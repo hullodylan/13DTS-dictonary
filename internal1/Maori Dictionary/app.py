@@ -41,6 +41,19 @@ def categories():
     con.close()
     return cat_names
 
+def student():
+    con = create_connection(database)
+    cur = con.cursor()
+    student_id = session['student']
+    query = "SELECT id, role FROM user WHERE id=?"
+    cur.execute(query, student_id)
+    role_data = cur.fetchall()
+    if role_data[0][1] == 'teacher':
+        print('teacher')
+    else:
+        print('student')
+    con.close()
+    return student
 
 
 
@@ -82,18 +95,15 @@ def render_category_page(cat_id):
     cur.execute(query)
     words = cur.fetchall()
 
-
-
 # User can add word
     if request.method == 'POST':
-        maori = request.form.get('maori')
-        english = request.form.get('english')
-        definition = request.form.get('definition')
+        maori = request.form.get('maori').strip().lower()
+        english = request.form.get('english').strip().lower()
+        definition = request.form.get('definition').strip().lower()
         level = request.form.get('level')
         editor_id = session['userid']
         timestamp = datetime.now()
         image_name = "noimage.png"
-
 
         query = """INSERT INTO wordbank(id, maori, english, cat_id, definition, level, editor_id, image, timestamp) 
         VALUES(NULL, ?, ?, ?, ?, ?, ?, ?, ?)"""
@@ -129,7 +139,6 @@ def render_word_page(word_id):
     cur = con.cursor()
     cur.execute(query)
     user_name = cur.fetchall()
-
 
 #Add edit word stuff
     if request.method == "POST":
@@ -170,9 +179,16 @@ def render_delete_cat_page(cat_id):
     cat = cur.fetchall()
     return render_template('delete_category.html', categories=categories(), category=cat, cat_id=int(cat_id))
 
+# Confirming deleting category
 @app.route('/confirm_delete_cat/<cat_id>',  methods=['GET', 'POST'])
 def confirm_delete_cat(cat_id):
+# Deleting words from the category
     con = create_connection(database)
+    query = "DELETE FROM wordbank WHERE cat_id=?"
+    cur = con.cursor()
+    cur.execute(query, (cat_id,))
+
+# Deleting the category
     query = "DELETE FROM category WHERE id=?"
     cur = con.cursor()
     cur.execute(query, (cat_id,))
@@ -180,6 +196,7 @@ def confirm_delete_cat(cat_id):
     con.close()
     return redirect('/')
 
+# Confirming deleting category
 @app.route('/confirm_delete_word/<word_id>',  methods=['GET', 'POST'])
 def confirm_delete_word(word_id):
     con = create_connection(database)
@@ -190,6 +207,7 @@ def confirm_delete_word(word_id):
     con.close()
     return redirect('/')
 
+# Dont delete word
 @app.route('/dont_delete')
 def dont_delete():
     return redirect('/')
@@ -246,6 +264,7 @@ def render_signup_page():
         email = request.form.get('email').strip().lower()
         password = request.form.get('password')
         password2 = request.form.get('password2')
+        role = request.form.get('role')
 
 # user error prevention
         if password != password2:
@@ -262,11 +281,11 @@ def render_signup_page():
         hashed_password = bcrypt.generate_password_hash(password)
 
         con = create_connection(database)
-        query = "INSERT into user(id, fname, lname, email, password) VALUES(NULL, ?,?,?,?)"
+        query = "INSERT into user(id, fname, lname, email, password, role) VALUES(NULL, ?,?,?,?,?)"
 
         cur = con.cursor()
         try:
-            cur.execute(query, (fname, lname, email, hashed_password))
+            cur.execute(query, (fname, lname, email, hashed_password, role))
         except sqlite3.IntegrityError:
             return redirect('/signup?error=email+is+already+used')
         con.commit()
