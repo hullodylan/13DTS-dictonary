@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block title %}Maōri Dictionary | Home{% endblock %}
+
+{% block heading %}Maōri - English Dictionary{% endblock %}
+
+{% block main %}
+    {% for delete in word %}
+        {% if delete[0] == word_id %}
+        <p>Are you sure you want to delete <strong>{{ delete[1] }}?</strong></p>
+        <p><a href="/confirm_delete_word/{{ delete[0] }}"><strong>Yes / </strong></a>
+        <a href="/dont_delete"><strong>No</strong></a>
+        {% endif %}
+    {% endfor %}
+
+{% endblock %}

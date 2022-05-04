@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block title %}Maōri Dictionary | Home{% endblock %}
+
+{% block heading %}Maōri - English Dictionary{% endblock %}
+
+{% block main %}
+{% for cat in category %}
+    {% if cat[0] == cat_id %}
+        <p>Are you sure you want to delete <strong>{{ cat[1] }}</strong></p>
+        <p><a href="/confirm_delete_cat/{{ cat[0] }}"><strong>Yes / </strong></a>
+        <a href="/dont_delete"><strong>No</strong></a>
+
+        </p>
+    {% endif %}
+{% endfor %}
+
+{% endblock %}
