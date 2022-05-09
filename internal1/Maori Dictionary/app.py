@@ -42,25 +42,25 @@ def categories():
     return cat_names
 
 def role():
-    con = create_connection(database)
-    cur = con.cursor()
-    userid = session['userid']
-    query = "SELECT role FROM user where id = ?"
-    cur.execute(query, (userid, ))
-    admin = cur.fetchall()
     if session.get('userid') is None:
         print("not logged in")
         role = "None"
+        return role
+    con = create_connection(database)
+    cur = con.cursor()
+    userid = session['userid']
+    query = "SELECT role FROM user WHERE id = ?"
+    cur.execute(query, (userid, ))
+    admin = cur.fetchall()
+    if admin[0][0] == 'teacher':
+        print('teacher')
+        role = 'teacher'
+    elif admin[0][0] == 'student':
+        print('student')
+        role = 'student'
     else:
-        if admin[0][0] == 'teacher':
-            print('teacher')
-            role = 'teacher'
-        elif admin[0][0] == 'student':
-            print('student')
-            role = 'student'
-        else:
-            print("neither")
-            role = None
+        print("neither")
+        role = None
     return role
 
 
@@ -129,7 +129,7 @@ def render_category_page(cat_id):
         error = ""
 
     return render_template('category.html', words=words, logged_in=is_logged_in(), categories=categories(),
-                           category_id=int(cat_id), error=error, category=category)
+                           category_id=int(cat_id), error=error, category=category, role=role())
 
 # Takes user to specific word details page
 @app.route('/word/<word_id>', methods=['GET', 'POST'])
@@ -162,7 +162,7 @@ def render_word_page(word_id):
         return redirect(request.url)
     con.close()
     return render_template('word.html', logged_in=is_logged_in(), categories=categories(), word_id=int(word_id),
-                           word_display=word_display, user_name=user_name)
+                           word_display=word_display, user_name=user_name, role=role())
 
 # User can delete a word
 @app.route('/delete_word/<word_id>')
@@ -174,7 +174,7 @@ def render_delete_word_page(word_id):
     word = cur.fetchall()
     con.close()
 
-    return render_template('delete_word.html', categories=categories(), word_id=int(word_id), word=word)
+    return render_template('delete_word.html', categories=categories(), word_id=int(word_id), word=word, role=role())
 
 # User can delete a category
 @app.route('/delete_category/<cat_id>')
@@ -184,7 +184,8 @@ def render_delete_cat_page(cat_id):
     cur = con.cursor()
     cur.execute(query)
     cat = cur.fetchall()
-    return render_template('delete_category.html', categories=categories(), category=cat, cat_id=int(cat_id))
+    return render_template('delete_category.html', categories=categories(), category=cat, cat_id=int(cat_id),
+                           role=role())
 
 # Confirming deleting category
 @app.route('/confirm_delete_cat/<cat_id>',  methods=['GET', 'POST'])
@@ -316,7 +317,5 @@ def logout():
     [session.pop(key) for key in list(session.keys())]
     print(list(session.keys()))
     return redirect('/?message=See+you+next+time!')
-
-
 
 app.run(host='0.0.0.0', debug=True)
