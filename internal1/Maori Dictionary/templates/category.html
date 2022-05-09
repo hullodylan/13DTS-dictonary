@@ -13,7 +13,7 @@
 
 {% block main %}
 
-{% if logged_in %}
+{% if logged_in and role == 'teacher' %}
     {% for cat in category %}
         {% if cat[0] == category_id %}
             <a href="/delete_category/{{ cat[0] }}"><strong>Delete category</strong></a>
@@ -47,7 +47,7 @@
 </table>
 
 <!-- User can add word into category -->
-{%  if logged_in %}
+{%  if logged_in and role == 'teacher' %}
 <div class="error">{{error}}</div>
 <form class="dataForm" method="post">
     <h><strong>Add a word</strong></h>
