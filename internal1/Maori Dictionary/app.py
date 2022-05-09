@@ -41,20 +41,27 @@ def categories():
     con.close()
     return cat_names
 
-def student():
+def role():
     con = create_connection(database)
     cur = con.cursor()
-    student_id = session['student']
-    query = "SELECT id, role FROM user WHERE id=?"
-    cur.execute(query, student_id)
-    role_data = cur.fetchall()
-    if role_data[0][1] == 'teacher':
-        print('teacher')
+    userid = session['userid']
+    query = "SELECT role FROM user where id = ?"
+    cur.execute(query, (userid, ))
+    admin = cur.fetchall()
+    if session.get('userid') is None:
+        print("not logged in")
+        role = "None"
     else:
-        print('student')
-    con.close()
-    return student
-
+        if admin[0][0] == 'teacher':
+            print('teacher')
+            role = 'teacher'
+        elif admin[0][0] == 'student':
+            print('student')
+            role = 'student'
+        else:
+            print("neither")
+            role = None
+    return role
 
 
 # Homepage link route
@@ -78,7 +85,7 @@ def render_homepage():
     if error == None:
         error = ""
 
-    return render_template('home.html', categories=categories(), logged_in=is_logged_in(), error=error)
+    return render_template('home.html', categories=categories(), logged_in=is_logged_in(), error=error, role=role())
 
 # category link route
 @app.route('/category/<cat_id>', methods=['GET', 'POST'])
@@ -212,7 +219,6 @@ def confirm_delete_word(word_id):
 def dont_delete():
     return redirect('/')
 
-
 # Login link route
 @app.route('/login', methods=["GET", "POST"])
 def render_login_page():
@@ -223,7 +229,7 @@ def render_login_page():
         email = request.form["email"].strip().lower()
         password = request.form["password"].strip()
 
-        query = """SELECT id, fname, password FROM user WHERE email = ? """
+        query = """SELECT id, fname, password, role FROM user WHERE email = ? """
         con = create_connection(database)
         cur = con.cursor()  # You need this line next
         cur.execute(query, (email,))  # this line actually executes the query
@@ -232,8 +238,10 @@ def render_login_page():
 
         try:
             userid = user_data[0][0]
-            firstname = user_data[0][1]
+            fname = user_data[0][1]
             db_password = user_data[0][2]
+            role = user_data[0][3]
+
         except IndexError:
             return redirect("/login?error=Email+invalid+or+password+incorrect")
 
@@ -244,7 +252,9 @@ def render_login_page():
 
         session['email'] = email
         session['userid'] = userid
-        session['firstname'] = firstname
+        session['fname'] = fname
+        session['role'] = role
+
         print(session)
         return redirect('/')
 
@@ -292,7 +302,7 @@ def render_signup_page():
         con.close()
 
         return redirect('/login')
-# Error prevention
+
     error = request.args.get('error')
     if error == None:
         error = ""
