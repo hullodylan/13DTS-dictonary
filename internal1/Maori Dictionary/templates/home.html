@@ -14,7 +14,7 @@
 
 <!-- Allowing the user to add a category -->
 {% if logged_in and role == 'teacher' %}
-
+<div class="error">{{error}}</div>
 <form class="dataForm" method="post">
     <div class="form-group">
         <div class="form-label">Add a category:</div>
