@@ -1,25 +1,19 @@
 {% extends 'base.html' %}
 
-{% block title %}{% endblock %}
 
+<!-- displaying heading -->
 {% block heading %}
-
     {% for cat in category %}
         {% if cat[0] == category_id %}
-            {{ cat[1] }}
+            {{ cat[1] }} -
+            {% if logged_in and role == 'teacher' %}
+                <a href="/delete_category/{{ cat[0] }}">Delete category</a>
+            {% endif %}
         {% endif %}
 {% endfor %}
 {% endblock %}
 
 {% block main %}
-
-{% if logged_in and role == 'teacher' %}
-    {% for cat in category %}
-        {% if cat[0] == category_id %}
-            <a href="/delete_category/{{ cat[0] }}"><strong>Delete category</strong></a>
-        {% endif %}
-    {% endfor %}
-{% endif %}
 
 <!-- Displaying words into their category links -->
 <table class="word-table">
@@ -63,9 +57,9 @@
 
     <div class="form-group">
         <div class="form-label">Level:</div>
-        {% for i in range(10) %}
-            <input type="radio" id="{{ i + 1 }}" name="level" value="{{ i + 1 }}">
-            <label for="{{ i + 1 }}">{{ i + 1 }}</label>
+        {% for num in range(10) %}
+            <input type="radio" id="{{ num + 1 }}" name="level" value="{{ num + 1 }}"required>
+            <label for="{{ num + 1 }}">{{ num + 1 }}</label>
         {% endfor %}
     </div>
 
