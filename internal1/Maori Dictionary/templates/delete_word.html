@@ -4,6 +4,7 @@
 {% block heading %}Maōri - English Dictionary{% endblock %}
 
 {% block main %}
+    <!-- Confirming delete action -->
     {% for delete in word %}
         {% if delete[0] == word_id %}
         <p>Are you sure you want to delete <strong>{{ delete[1] }}?</strong></p>

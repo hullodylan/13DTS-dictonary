@@ -1,11 +1,13 @@
 {% extends 'base.html' %}
 
-{% block title %}Maōri Dictionary | Home{% endblock %}
-
+<!-- displaying heading -->
 {% block heading %}
     {% for wordbank in word_display %}
         {% if wordbank[0] == word_id %}
-            {{ wordbank[1] }}
+            {{ wordbank[1] }} -
+            {% if logged_in and role == 'teacher' %}
+                <a href="/delete_word/{{ wordbank[0] }}">Delete word</a>
+            {% endif %}
         {% endif %}
     {% endfor %}
 {% endblock %}
@@ -15,16 +17,12 @@
     <!-- Displaying word -->
 {% for wordbank in word_display %}
     {% if wordbank[0] == word_id %}
-            {% if logged_in and role == 'teacher' %}
-                <h><strong>{{ wordbank[1] }} - <a href="/delete_word/{{ wordbank[0] }}">Delete word</a></strong></h>
-            {% endif %}
         
         <p><strong>Maori:</strong> {{ wordbank[1] }}</p>
         <p><strong>English:</strong> {{ wordbank[2] }}</p>
         <p><strong>Definition:</strong> {{ wordbank[3] }}</p>
         <p><strong>Level:</strong> {{ wordbank[4] }}</p>
         <p><img src="/static/images/{{ wordbank[5] }}"></p>
-
 
         {% for user in user_name %}
             {% if user[0] == wordbank[7] %}
@@ -52,13 +50,13 @@
 
             <div class="form-group">
         <div class="form-label">Level:</div>
-        {% for i in range(10) %}
-            {% if i + 1 == wordbank[4] %}
-                <input type="radio" id="{{ i + 1 }}" name="level" value="{{ i + 1 }}" checked>
+        {% for num in range(10) %}
+            {% if num + 1 == wordbank[4] %}
+                <input type="radio" id="{{ num + 1 }}" name="level" value="{{ num + 1 }}" checked>
             {% else %}
-                <input type="radio" id="{{ i + 1 }}" name="level" value="{{ i + 1 }}">
+                <input type="radio" id="{{ num + 1 }}" name="level" value="{{ num + 1 }}">
             {% endif %}
-            <label for="{{ i + 1 }}">{{ i + 1 }}</label>
+            <label for="{{ num + 1 }}">{{ num + 1 }}</label>
         {% endfor %}
         </div>
 

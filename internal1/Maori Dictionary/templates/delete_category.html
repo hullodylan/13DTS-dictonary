@@ -4,6 +4,7 @@
 {% block heading %}Maōri - English Dictionary{% endblock %}
 
 {% block main %}
+    <!-- Confirming delete action -->
 {% for cat in category %}
     {% if cat[0] == cat_id %}
         <p>Are you sure you want to delete <strong>{{ cat[1] }}</strong></p>
