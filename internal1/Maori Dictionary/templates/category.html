@@ -58,25 +58,25 @@
     <h><strong>Add a word</strong></h>
     <div class="form-group">
         <div class="form-label">Maori word:</div>
-        <div class="form-element"><input id="maori" name="maori" type="text" required></div>
+        <div class="form-element"><input id="maori" name="maori" type="text" maxlength="30" required></div>
     </div>
 
     <div class="form-group">
         <div class="form-label">English translation:</div>
-        <div class="form-element"><input id="english" name="english" type="text" required></div>
+        <div class="form-element"><input id="english" name="english" type="text" maxlength="30" required></div>
     </div>
 
     <div class="form-group">
         <div class="form-label">Level:</div>
         {% for num in range(10) %}
-            <input type="radio" id="{{ num + 1 }}" name="level" value="{{ num + 1 }}"required>
+            <input type="radio" id="{{ num + 1 }}" name="level" value="{{ num + 1 }}" required>
             <label for="{{ num + 1 }}">{{ num + 1 }}</label>
         {% endfor %}
     </div>
 
     <div class="form-group">
         <div class="form-label">Definition:</div>
-        <div class="form-element"><input id="definition" name="definition" type="text" required></div>
+        <div class="form-element"><input id="definition" name="definition" type="text" maxlength="60" required></div>
     </div>
 
 
