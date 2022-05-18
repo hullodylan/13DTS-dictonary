@@ -10,6 +10,7 @@ bcrypt = Bcrypt(app)
 app.secret_key = "secret"
 
 
+# Creating connection to table
 def create_connection(db_file):
     """create a connection to the sqlite db"""
     try:
@@ -21,7 +22,8 @@ def create_connection(db_file):
         print(e)
     return None
 
-# If user is logged in
+
+# User is logged in or not logged in
 def is_logged_in():
     if session.get("email") is None:
         print("not logged in")
@@ -30,7 +32,8 @@ def is_logged_in():
         print("logged in")
         return True
 
-# Displays categories on sidebar
+
+# Displays categories on the sidebar
 def categories():
     # Category nav/sidebar
     query = "SELECT id, cat_name FROM category"
@@ -41,6 +44,8 @@ def categories():
     con.close()
     return cat_names
 
+
+# User is a teacher or student
 def role():
     if session.get('userid') is None:
         print("not logged in")
@@ -50,7 +55,7 @@ def role():
     cur = con.cursor()
     userid = session['userid']
     query = "SELECT role FROM user WHERE id = ?"
-    cur.execute(query, (userid, ))
+    cur.execute(query, (userid,))
     admin = cur.fetchall()
     if admin[0][0] == 'teacher':
         print('teacher')
@@ -64,45 +69,58 @@ def role():
     return role
 
 
-# Homepage link route
+# Homepage route
 @app.route('/', methods=['GET', 'POST'])
 def render_homepage():
+    """
+    Route for the homepage
+
+    returns home.html with adding category
+    """
     if request.method == 'POST':
-        cat_name =request.form.get('cat_name').strip().lower()
+        cat_name = request.form.get('cat_name').strip().lower()
         con = create_connection(database)
 
-        query = "INSERT INTO category(cat_name) VALUES(?)"
-        cur = con.cursor()  # You need this line next
+        query = "INSERT INTO category (cat_name) VALUES(?)"
+        cur = con.cursor()
 
         try:
-            cur.execute(query, (cat_name, ))
+            cur.execute(query, (cat_name,))
         except sqlite3.IntegrityError:
-            return redirect('/?error=category+is+already+used')
+            return redirect('/?error=category+is+already+used')  # error prevention
         con.commit()
         con.close()
-
+    # error prevention
     error = request.args.get('error')
-    if error == None:
+    if error is None:
         error = ""
 
     return render_template('home.html', categories=categories(), logged_in=is_logged_in(), error=error, role=role())
 
-# category link route
+
+# Category route
 @app.route('/category/<cat_id>', methods=['GET', 'POST'])
 def render_category_page(cat_id):
+    """
+    Route for each individual category
+
+    Allows user to add a word into the dictionary under the cat_id the page is on
+
+    Returns category.html as the category id
+    """
     con = create_connection(database)
     query = "SELECT id, cat_name FROM category"
     cur = con.cursor()
     cur.execute(query)
     category = cur.fetchall()
 
-# Displaying each word on their category
+    # Displaying each word on their category
     query = "SELECT cat_id, maori, english, image, id FROM wordbank"
     cur = con.cursor()
     cur.execute(query)
     words = cur.fetchall()
 
-# User can add word
+    # User can add word
     if request.method == 'POST':
         maori = request.form.get('maori').strip().lower()
         english = request.form.get('english').strip().lower()
@@ -110,6 +128,7 @@ def render_category_page(cat_id):
         level = request.form.get('level')
         editor_id = session['userid']
         timestamp = datetime.now()
+        format_timestamp = timestamp.strftime("%Y-%m-%d %X")
         image_name = "noimage.png"
 
         query = """INSERT INTO wordbank(id, maori, english, cat_id, definition, level, editor_id, image, timestamp) 
@@ -117,23 +136,30 @@ def render_category_page(cat_id):
         cur = con.cursor()
 
         try:
-            cur.execute(query, (maori, english, cat_id, definition, level, editor_id, image_name, timestamp))
+            cur.execute(query, (maori, english, cat_id, definition, level, editor_id, image_name, format_timestamp))
         except sqlite3.IntegrityError:
-                return redirect('/category?error=word+is+already+used')
+            return redirect('/category?error=word+is+already+used')  # error prevention
         con.commit()
         con.close()
         return redirect(request.url)
-
+    # error prevention
     error = request.args.get('error')
-    if error == None:
+    if error is None:
         error = ""
 
     return render_template('category.html', words=words, logged_in=is_logged_in(), categories=categories(),
                            category_id=int(cat_id), error=error, category=category, role=role())
 
-# Takes user to specific word details page
+
 @app.route('/word/<word_id>', methods=['GET', 'POST'])
 def render_word_page(word_id):
+    """
+    Route for each individual word
+
+    Allows user to edit the words details
+
+    Returns word.html as the word id
+    """
     # Grabbing the word details
     con = create_connection(database)
     cur = con.cursor()
@@ -141,13 +167,13 @@ def render_word_page(word_id):
     cur.execute(query)
     word_display = cur.fetchall()
 
-# Grabbing the editors details
-    query = """SELECT id, fname FROM user"""
+    # Grabbing the editors details
+    query = "SELECT id, fname FROM user"
     cur = con.cursor()
     cur.execute(query)
     user_name = cur.fetchall()
 
-#Add edit word stuff
+    # User edits a word
     if request.method == "POST":
         maori = request.form.get('maori').strip().lower()
         english = request.form.get('english').strip().lower()
@@ -155,18 +181,58 @@ def render_word_page(word_id):
         level = request.form.get('level')
         editor_id = session['userid']
         timestamp = datetime.now()
+        format_timestamp = timestamp.strftime("%Y-%m-%d %X")
 
         query = "UPDATE wordbank SET maori=?, english=?, definition=?,level=?,timestamp=?, editor_id=? WHERE id=?"
-        cur.execute(query,(maori, english, definition, level, timestamp, editor_id, word_id))
+        cur.execute(query, (maori, english, definition, level, format_timestamp, editor_id, word_id))
         con.commit()
         return redirect(request.url)
+
     con.close()
     return render_template('word.html', logged_in=is_logged_in(), categories=categories(), word_id=int(word_id),
                            word_display=word_display, user_name=user_name, role=role())
 
-# User can delete a word
+
+@app.route('/edit_category/<cat_id>', methods=['GET', 'POST'])
+def render_edit_category_page(cat_id):
+    """
+    Route for editing category name
+
+    Allows user to edit the category name
+
+    Redirects back to home - put to redirect to their category
+    """
+    con = create_connection(database)
+    query = "SELECT id, cat_name FROM category"
+    cur = con.cursor()
+    cur.execute(query)
+    category = cur.fetchall()
+
+    if request.method == 'POST':
+        cat_name = request.form.get('cat_name').strip().lower()
+        query = "UPDATE category SET cat_name=? WHERE id=?"
+        cur.execute(query, (cat_name, cat_id))
+        con.commit()
+        return redirect('/')
+    con.close()
+
+    # error prevention
+    error = request.args.get('error')
+    if error is None:
+        error = ""
+
+    return render_template('edit_category.html', categories=categories(), cat_id=int(cat_id), role=role(),
+                           category=category, logged_in=is_logged_in(), error=error)
+
 @app.route('/delete_word/<word_id>')
 def render_delete_word_page(word_id):
+    """
+    Route for deleting an individual word
+
+    User chooses to delete the word selected
+
+    Returns delete_word.html as the word id
+    """
     con = create_connection(database)
     query = "SELECT id, maori FROM wordbank "
     cur = con.cursor()
@@ -174,29 +240,45 @@ def render_delete_word_page(word_id):
     word = cur.fetchall()
     con.close()
 
-    return render_template('delete_word.html', categories=categories(), word_id=int(word_id), word=word, role=role())
+    return render_template('delete_word.html', categories=categories(), word_id=int(word_id), word=word, role=role(),
+                           logged_in=is_logged_in())
 
-# User can delete a category
+
 @app.route('/delete_category/<cat_id>')
 def render_delete_cat_page(cat_id):
+    """
+        Route for deleting a category
+
+        User chooses to delete the category selected
+
+        Returns delete_category.html as the category id
+        """
     con = create_connection(database)
     query = "SELECT id, cat_name FROM category "
     cur = con.cursor()
     cur.execute(query)
     cat = cur.fetchall()
     return render_template('delete_category.html', categories=categories(), category=cat, cat_id=int(cat_id),
-                           role=role())
+                           role=role(), logged_in=is_logged_in())
 
-# Confirming deleting category
-@app.route('/confirm_delete_cat/<cat_id>',  methods=['GET', 'POST'])
+
+@app.route('/confirm_delete_cat/<cat_id>', methods=['GET', 'POST'])
 def confirm_delete_cat(cat_id):
-# Deleting words from the category
+    """
+    Route for confirming deleting a category
+
+    User confrims to delete the category and the words that match the same category id
+
+    Redirects back to homepage after deleting category
+
+    """
+    # Deleting words from the category
     con = create_connection(database)
     query = "DELETE FROM wordbank WHERE cat_id=?"
     cur = con.cursor()
     cur.execute(query, (cat_id,))
 
-# Deleting the category
+    # Deleting the category
     query = "DELETE FROM category WHERE id=?"
     cur = con.cursor()
     cur.execute(query, (cat_id,))
@@ -204,39 +286,65 @@ def confirm_delete_cat(cat_id):
     con.close()
     return redirect('/')
 
-# Confirming deleting category
-@app.route('/confirm_delete_word/<word_id>',  methods=['GET', 'POST'])
+
+@app.route('/confirm_delete_word/<word_id>', methods=['GET', 'POST'])
 def confirm_delete_word(word_id):
+    """
+    Route for confirming deleting a word
+
+    User confrims to delete the word
+
+    Redirects back to homepage after deleting the word
+
+    """
+    # Deleting words from t
     con = create_connection(database)
     query = "DELETE FROM wordbank WHERE id=?"
     cur = con.cursor()
-    cur.execute(query, (word_id, ))
+    cur.execute(query, (word_id,))
     con.commit()
     con.close()
     return redirect('/')
 
-# Dont delete word
+
 @app.route('/dont_delete')
 def dont_delete():
-    return redirect('/')
+    """
+    Route for not deleting word or category
 
-# Login link route
+    Redirects user back to homepage if they dont want to delete
+    """
+    return redirect('/')  # Takes user back to homepage if they dont want to delete
+
+
 @app.route('/login', methods=["GET", "POST"])
 def render_login_page():
+    """
+    Route for login page
+
+    User enters login details
+        - checks if they match details in user
+            - if they do then login is successful - session is created
+            -if not then error occurs - redirected to login page
+
+    Returns login.html
+
+    """
+    # Redirecting user if logged in
     if is_logged_in():
         return redirect('/')
-
+    # User enters login details
     if request.method == "POST":
         email = request.form["email"].strip().lower()
         password = request.form["password"].strip()
 
         query = """SELECT id, fname, password, role FROM user WHERE email = ? """
         con = create_connection(database)
-        cur = con.cursor()  # You need this line next
-        cur.execute(query, (email,))  # this line actually executes the query
+        cur = con.cursor()
+        cur.execute(query, (email,))
         user_data = cur.fetchall()
         con.close()
-
+        # See if user entries match login details
         try:
             userid = user_data[0][0]
             fname = user_data[0][1]
@@ -246,11 +354,11 @@ def render_login_page():
         except IndexError:
             return redirect("/login?error=Email+invalid+or+password+incorrect")
 
-# check if the password is incorrect for that email address
+        # check to see if password matches to email address
 
         if not bcrypt.check_password_hash(db_password, password):
-            return redirect(request.referrer + "?error=Email+invalid+or+password+incorrect")
-
+            return redirect("/login?error=Email+invalid+or+password+incorrect")
+        # Creating sessions
         session['email'] = email
         session['userid'] = userid
         session['fname'] = fname
@@ -259,15 +367,31 @@ def render_login_page():
         print(session)
         return redirect('/')
 
-    return render_template('login.html', logged_in=is_logged_in(), categories=categories())
+    # error prevention
+    error = request.args.get('error')
+    if error is None:
+        error = ""
+
+    return render_template('login.html', logged_in=is_logged_in(), categories=categories(), error=error)
 
 
-# Signup link route
 @app.route('/signup', methods=['GET', 'POST'])
 def render_signup_page():
+    """
+    Route for signup page
+
+    User enters signup details
+        - if they dont meet certain requirements then they are redirected to signup page to try again
+        - if signup details are suitable, its inserted into user and the password is hashed and then redirected
+          to login.html
+
+    Returns signup.html
+x
+    """
+    # Redirecting user if logged in
     if is_logged_in():
         return redirect('/')
-
+    # User creates an account
     if request.method == 'POST':
         print(request.form)
         fname = request.form.get('fname').strip().title()
@@ -277,7 +401,7 @@ def render_signup_page():
         password2 = request.form.get('password2')
         role = request.form.get('role')
 
-# user error prevention
+        # user error prevention
         if password != password2:
             return redirect('/signup?error=Passwords+dont+match')
         if len(password) < 8:
@@ -301,21 +425,27 @@ def render_signup_page():
             return redirect('/signup?error=email+is+already+used')
         con.commit()
         con.close()
-
         return redirect('/login')
 
+    # error prevention
     error = request.args.get('error')
-    if error == None:
+    if error is None:
         error = ""
 
     return render_template('signup.html', logged_in=is_logged_in(), error=error, categories=categories())
 
-# Allowing the user to log out
+
 @app.route('/logout')
 def logout():
+    """
+    Route for signout
+
+    Redirects user back to homepage
+    """
     print(list(session.keys()))
     [session.pop(key) for key in list(session.keys())]
     print(list(session.keys()))
     return redirect('/?message=See+you+next+time!')
+
 
 app.run(host='0.0.0.0', debug=True)

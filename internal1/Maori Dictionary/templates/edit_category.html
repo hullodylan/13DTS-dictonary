@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block main %}
+{% for cat in category %}
+        {% if cat[0] == cat_id %}
+            <h1>Edit the category: {{ cat[1] }}</h1>
+            {% if logged_in and role == 'teacher' %}
+                <div class="error">{{error}}</div>
+                <form class="dataForm" method="POST">
+                    <div class="form-group">
+                        <div class="form-label">Edit <strong>{{ cat[1] }}:</strong></div>
+                        <div class="form-element"><input id="cat_name" name="cat_name" type="text" value="{{ cat[1] }}"></div>
+                    </div>
+
+                    <div class="button-group">
+                            <input type="submit" value="Submit">
+                        </div>
+                </form>
+            {% endif %}
+    {% endif %}
+{% endfor %}
+{% endblock %}

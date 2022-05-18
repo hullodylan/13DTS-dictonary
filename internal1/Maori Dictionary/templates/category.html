@@ -5,15 +5,24 @@
 {% block heading %}
     {% for cat in category %}
         {% if cat[0] == category_id %}
-            {{ cat[1] }} -
+            {{ cat[1] }}
             {% if logged_in and role == 'teacher' %}
-                <a href="/delete_category/{{ cat[0] }}">Delete category</a>
+                <a href="/delete_category/{{ cat[0] }}">- Delete category</a>
             {% endif %}
         {% endif %}
 {% endfor %}
 {% endblock %}
 
 {% block main %}
+
+<!-- User can edit category name -->
+{% for cat in category %}
+    {% if cat[0] == category_id %}
+        {% if logged_in and role == 'teacher' %}
+            <h3><a href="/edit_category/{{ cat[0] }}"><strong>edit category</strong></a></h3>
+        {% endif %}
+    {% endif %}
+{% endfor %}
 
 <!-- Displaying words into their category links -->
 <table class="word-table">
@@ -27,10 +36,12 @@
     <tbody>
     {% for wordbank in words %}
         {% if wordbank[0] == category_id %}
+
+
             <tr>
                 <td><a href="/word/{{ wordbank[4] }}">{{ wordbank[1] }}</a></td>
                 <td>{{ wordbank[2] }}</td>
-                <td><img src="/static/images/{{ wordbank[3] }}" class="thumb"></td>
+                <td width="150"><img src="/static/images/{{ wordbank[3] }}" class="thumb"></td>
 
             </tr>
 
