@@ -68,6 +68,15 @@ def role():
         role = None
     return role
 
+def update_word():
+    maori = request.form.get('maori').strip().lower()
+    english = request.form.get('english').strip().lower()
+    definition = request.form.get('definition').strip().lower()
+    level = int(request.form.get('level'))
+    editor_id = session['userid']
+    timestamp = datetime.now()
+    format_timestamp = timestamp.strftime("%Y-%m-%d %X")
+    return maori, english, definition, level, editor_id, format_timestamp
 
 # Homepage route
 @app.route('/', methods=['GET', 'POST'])
@@ -115,20 +124,14 @@ def render_category_page(cat_id):
     category = cur.fetchall()
 
     # Displaying each word on their category
-    query = "SELECT cat_id, maori, english, image, id FROM wordbank"
+    query = "SELECT cat_id, maori, english, image, id FROM wordbank ORDER BY timestamp DESC "
     cur = con.cursor()
     cur.execute(query)
     words = cur.fetchall()
 
     # User can add word
     if request.method == 'POST':
-        maori = request.form.get('maori').strip().lower()
-        english = request.form.get('english').strip().lower()
-        definition = request.form.get('definition').strip().lower()
-        level = request.form.get('level')
-        editor_id = session['userid']
-        timestamp = datetime.now()
-        format_timestamp = timestamp.strftime("%Y-%m-%d %X")
+        word = update_word()
         image_name = "noimage.png"
 
         query = """INSERT INTO wordbank(id, maori, english, cat_id, definition, level, editor_id, image, timestamp) 
@@ -136,7 +139,8 @@ def render_category_page(cat_id):
         cur = con.cursor()
 
         try:
-            cur.execute(query, (maori, english, cat_id, definition, level, editor_id, image_name, format_timestamp))
+            cur.execute(query, (word[0], word[1], cat_id, word[2], word[3], word[4], image_name, word[5]))
+
         except sqlite3.IntegrityError:
             return redirect('/category?error=word+is+already+used')  # error prevention
         con.commit()
@@ -175,16 +179,9 @@ def render_word_page(word_id):
 
     # User edits a word
     if request.method == "POST":
-        maori = request.form.get('maori').strip().lower()
-        english = request.form.get('english').strip().lower()
-        definition = request.form.get('definition').strip().lower()
-        level = request.form.get('level')
-        editor_id = session['userid']
-        timestamp = datetime.now()
-        format_timestamp = timestamp.strftime("%Y-%m-%d %X")
-
-        query = "UPDATE wordbank SET maori=?, english=?, definition=?,level=?,timestamp=?, editor_id=? WHERE id=?"
-        cur.execute(query, (maori, english, definition, level, format_timestamp, editor_id, word_id))
+        word = update_word()
+        query = "UPDATE wordbank SET maori=?, english=?, definition=?, level=?, editor_id=?, timestamp=? WHERE id=?"
+        cur.execute(query, (word[0], word[1], word[2], word[3], word[4], word[5], word_id))
         con.commit()
         return redirect(request.url)
 
@@ -200,7 +197,7 @@ def render_edit_category_page(cat_id):
 
     Allows user to edit the category name
 
-    Redirects back to home - put to redirect to their category
+    Redirects user to the category they edited
     """
     con = create_connection(database)
     query = "SELECT id, cat_name FROM category"
@@ -213,7 +210,7 @@ def render_edit_category_page(cat_id):
         query = "UPDATE category SET cat_name=? WHERE id=?"
         cur.execute(query, (cat_name, cat_id))
         con.commit()
-        return redirect('/')
+        return redirect('/category/{}'.format(cat_id))
     con.close()
 
     # error prevention
@@ -233,6 +230,10 @@ def render_delete_word_page(word_id):
 
     Returns delete_word.html as the word id
     """
+    # Redirecting user if not logged in and is not a teacher
+    if not is_logged_in() and role != 'teacher':
+        return redirect('/')
+
     con = create_connection(database)
     query = "SELECT id, maori FROM wordbank "
     cur = con.cursor()
@@ -252,7 +253,11 @@ def render_delete_cat_page(cat_id):
         User chooses to delete the category selected
 
         Returns delete_category.html as the category id
-        """
+    """
+    # Redirecting user if not logged in and is not a teacher
+    if not is_logged_in() and role != 'student':
+        return redirect('/')
+
     con = create_connection(database)
     query = "SELECT id, cat_name FROM category "
     cur = con.cursor()
@@ -267,11 +272,14 @@ def confirm_delete_cat(cat_id):
     """
     Route for confirming deleting a category
 
-    User confrims to delete the category and the words that match the same category id
+    User confirms to delete the category and the words that match the same category id
 
     Redirects back to homepage after deleting category
-
     """
+    # Redirecting user if not logged in
+    if not is_logged_in():
+        return redirect('/')
+
     # Deleting words from the category
     con = create_connection(database)
     query = "DELETE FROM wordbank WHERE cat_id=?"
@@ -292,12 +300,12 @@ def confirm_delete_word(word_id):
     """
     Route for confirming deleting a word
 
-    User confrims to delete the word
+    User confirms to delete the word
 
     Redirects back to homepage after deleting the word
 
     """
-    # Deleting words from t
+    # Deleting words from the database
     con = create_connection(database)
     query = "DELETE FROM wordbank WHERE id=?"
     cur = con.cursor()
