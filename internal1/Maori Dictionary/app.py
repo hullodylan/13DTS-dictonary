@@ -199,6 +199,13 @@ def render_edit_category_page(cat_id):
 
     Redirects user to the category they edited
     """
+    # Redirecting user if not logged in and is not a teacher
+    if not is_logged_in():
+        return redirect('/')
+
+    if role() == 'student':
+        return redirect('/')
+
     con = create_connection(database)
     query = "SELECT id, cat_name FROM category"
     cur = con.cursor()
@@ -231,7 +238,10 @@ def render_delete_word_page(word_id):
     Returns delete_word.html as the word id
     """
     # Redirecting user if not logged in and is not a teacher
-    if not is_logged_in() and role != 'teacher':
+    if not is_logged_in():
+        return redirect('/')
+
+    if role() == 'student':
         return redirect('/')
 
     con = create_connection(database)
@@ -255,7 +265,10 @@ def render_delete_cat_page(cat_id):
         Returns delete_category.html as the category id
     """
     # Redirecting user if not logged in and is not a teacher
-    if not is_logged_in() and role != 'student':
+    if not is_logged_in():
+        return redirect('/')
+
+    if role() == 'student':
         return redirect('/')
 
     con = create_connection(database)
@@ -276,8 +289,11 @@ def confirm_delete_cat(cat_id):
 
     Redirects back to homepage after deleting category
     """
-    # Redirecting user if not logged in
+    # Redirecting user if not logged in and is not a teacher
     if not is_logged_in():
+        return redirect('/')
+
+    if role() == 'student':
         return redirect('/')
 
     # Deleting words from the category
