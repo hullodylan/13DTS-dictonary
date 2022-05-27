@@ -68,6 +68,8 @@ def role():
         role = None
     return role
 
+
+# Function for word details after form is filled
 def update_word():
     maori = request.form.get('maori').strip().lower()
     english = request.form.get('english').strip().lower()
@@ -77,6 +79,7 @@ def update_word():
     timestamp = datetime.now()
     format_timestamp = timestamp.strftime("%Y-%m-%d %X")
     return maori, english, definition, level, editor_id, format_timestamp
+
 
 # Homepage route
 @app.route('/', methods=['GET', 'POST'])
@@ -118,12 +121,21 @@ def render_category_page(cat_id):
     Returns category.html as the category id
     """
     con = create_connection(database)
+    # If user enters an invalid cat_id into the url - returns to homepage - error prevention
+    query = "SELECT id FROM category WHERE id=?"
+    cur = con.cursor()
+    cur.execute(query, (cat_id, ))
+    qwe = cur.fetchall()
+
+    if len(qwe) == 0:  # Redirects user to homepage if invalid cat_id is put in
+        return redirect('/')
+
     query = "SELECT id, cat_name FROM category"
     cur = con.cursor()
     cur.execute(query)
     category = cur.fetchall()
 
-    # Displaying each word on their category
+    # Displaying each word on their category - ordered by timestamp
     query = "SELECT cat_id, maori, english, image, id FROM wordbank ORDER BY timestamp DESC "
     cur = con.cursor()
     cur.execute(query)
@@ -164,8 +176,9 @@ def render_word_page(word_id):
 
     Returns word.html as the word id
     """
-    # Grabbing the word details
     con = create_connection(database)
+
+    # Grabbing the word details
     cur = con.cursor()
     query = "SELECT id, maori, english, definition, level, image, timestamp, editor_id FROM wordbank"
     cur.execute(query)
@@ -227,6 +240,7 @@ def render_edit_category_page(cat_id):
 
     return render_template('edit_category.html', categories=categories(), cat_id=int(cat_id), role=role(),
                            category=category, logged_in=is_logged_in(), error=error)
+
 
 @app.route('/delete_word/<word_id>')
 def render_delete_word_page(word_id):
@@ -462,7 +476,7 @@ x
 @app.route('/logout')
 def logout():
     """
-    Route for signout
+    Route for sign out
 
     Redirects user back to homepage
     """
