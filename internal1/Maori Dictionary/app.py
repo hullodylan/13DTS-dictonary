@@ -125,9 +125,9 @@ def render_category_page(cat_id):
     query = "SELECT id FROM category WHERE id=?"
     cur = con.cursor()
     cur.execute(query, (cat_id, ))
-    qwe = cur.fetchall()
+    id = cur.fetchall()
 
-    if len(qwe) == 0:  # Redirects user to homepage if invalid cat_id is put in
+    if len(id) == 0:  # Redirects user to homepage if invalid cat_id is put in
         return redirect('/')
 
     query = "SELECT id, cat_name FROM category"
@@ -177,6 +177,14 @@ def render_word_page(word_id):
     Returns word.html as the word id
     """
     con = create_connection(database)
+
+    query = "SELECT id FROM wordbank WHERE id=?"
+    cur = con.cursor()
+    cur.execute(query, (word_id,))
+    id = cur.fetchall()
+
+    if len(id) == 0:  # Redirects user to homepage if invalid cat_id is put in
+        return redirect('/')
 
     # Grabbing the word details
     cur = con.cursor()
